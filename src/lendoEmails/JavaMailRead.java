@@ -1,109 +1,74 @@
+package lendoEmails;
 
-import com.sun.mail.pop3.POP3SSLStore;
-import java.util.Date;
 import java.util.Properties;
-import javax.activation.DataHandler;
-import javax.mail.BodyPart;
+
+import javax.mail.Address;
 import javax.mail.Folder;
 import javax.mail.Message;
-import javax.mail.Multipart;
-import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Store;
-import javax.mail.URLName;
-import javax.mail.internet.InternetAddress;
 
-
- 
+/**
+ * Class reads emails
+ * 
+ * @author itcuties
+ * 
+ */
 public class JavaMailRead {
- 
-  public static void main(String args[]) throws Exception {
- 
-  String host = "pop3.live.com";
-  String username = "liv3trab@gmail.com";
-  String passwoed = "123456789liv";
- 
-  Properties props = System.getProperties();
-   
-  String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
- 
-  Properties pop3Props = new Properties();
- 
-  pop3Props.setProperty("mail.pop3.socketFactory.class", SSL_FACTORY);
-  pop3Props.setProperty("mail.pop3.socketFactory.fallback", "false");
-  pop3Props.setProperty("mail.pop3.port",  "995");
-  pop3Props.setProperty("mail.pop3.socketFactory.port", "995");
- 
-  URLName url = new URLName("pop3", host, 995, "",username, passwoed);
-   
-  Session session = Session.getDefaultInstance(props, new javax.mail.Authenticator() {
-                             protected PasswordAuthentication getPasswordAuthentication() 
-                             {
-                                   return new PasswordAuthentication(username, passwoed);
-                             }
-                        });
- 
-  Store store = new POP3SSLStore(session, url);
-  store.connect();
-             
-  Folder folder = store.getFolder("inbox");
- 
-  if (!folder.exists()) {
-  System.out.println("No INBOX...");
-  System.exit(0);
-  }
-  folder.open(Folder.READ_WRITE);
-  Message[] msg = folder.getMessages();
- 
-  for (int i = 0; i < msg.length; i++) {
-  System.out.println("------------ Message " + (i + 1) + " ------------");
-  String from = InternetAddress.toString(msg[i].getFrom());
-  if (from != null) {
-  System.out.println("From: " + from);
-  }
- 
-  String replyTo = InternetAddress.toString(
-  msg[i].getReplyTo());
-  if (replyTo != null) {
-  System.out.println("Reply-to: " + replyTo);
-  }
-  String to = InternetAddress.toString(
-  msg[i].getRecipients(Message.RecipientType.TO));
-  if (to != null) {
-  System.out.println("To: " + to);
-  }
- 
-  String subject = msg[i].getSubject();
-  if (subject != null) {
-  System.out.println("Subject: " + subject);
-  }
-  Date sent = msg[i].getSentDate();
-  if (sent != null) {
-  System.out.println("Sent: " + sent);
-  }
- 
-  System.out.println();
-  System.out.println("Message : ");
- 
-  Multipart multipart = (Multipart) msg[i].getContent();
-   
-  for (int x = 0; x < multipart.getCount(); x++) {
-  BodyPart bodyPart = multipart.getBodyPart(x);
- 
-  String disposition = bodyPart.getDisposition();
- 
-  if (disposition != null && (disposition.equals(BodyPart.ATTACHMENT))) {
-  System.out.println("Mail have some attachment : ");
- 
-  DataHandler handler = bodyPart.getDataHandler();
-  System.out.println("file name : " + handler.getName());
-  } else {
-  System.out.println(bodyPart.getContent());
-  }
-  }
-  System.out.println();
-  }
-  folder.close(true);
-  store.close();
-  }
+
+	public static void main(String[] args) {
+		readEmails(true);
+	}
+
+	/**
+	 * Method reads emails from the IMAP or POP3 server.
+	 * @param isImap - if true then we are reading messages from the IMAP server, if no then read from the POP3 server.
+	 */
+	private static void readEmails(boolean isImap) {
+		// Create all the needed properties - empty!
+		Properties connectionProperties = new Properties();
+		// Create the session
+		Session session = Session.getDefaultInstance(connectionProperties,null);
+		
+		try {
+			System.out.print("Connecting to the IMAP server...");
+			// Connecting to the server
+			// Set the store depending on the parameter flag value
+			String storeName = isImap ? "imaps" : "pop3";	
+			Store store = session.getStore(storeName);
+			
+			// Set the server depending on the parameter flag value
+			String server = isImap ? "imap.gmail.com" : "pop3.gmail.com"; 
+			store.connect(server,"liv3trab@gmail.com","123456789liv");
+			
+			System.out.println("done!");
+			
+			// Get the Inbox folder
+			Folder inbox = store.getFolder("Inbox");
+			
+			// Set the mode to the read-only mode
+			inbox.open(Folder.READ_ONLY);
+			
+			// Get messages
+			Message messages[] = inbox.getMessages();
+			
+			System.out.println("Reading messages...");
+			
+			// Display the messages
+			for(Message message:messages) {
+				for (Address a: message.getFrom())
+					System.out.println("From:" + a);
+					
+				System.out.println("Title: " + message.getSubject());
+				System.out.println();
+				System.out.println(message.getContent());
+				System.out.println("---");
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
+
 }
