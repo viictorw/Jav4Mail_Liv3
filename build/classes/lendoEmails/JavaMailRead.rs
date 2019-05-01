@@ -1,2 +1,0 @@
-JavaMailRead
-JavaMailRead$1
